@@ -38,7 +38,8 @@ export async function getMongoDb(): Promise<Db> {
     }
   }
   if (!dbName) {
-    throw new Error('Missing database name: set MONGODB_DB or include it in MONGODB_URI (e.g., mongodb://localhost:27017/yourdb)')
+    // Fallback to a sensible default to avoid crashes in local/Atlas setups
+    dbName = 'futureFunds'
   }
   const client = await getMongoClient()
   cachedDb = client.db(dbName)

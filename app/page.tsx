@@ -5,6 +5,7 @@ import { UserNav } from "@/components/user-nav"
 import { Calculator, TrendingUp, Shield, PiggyBank } from "lucide-react"
 
 export default function HomePage() {
+  const mutualMarketHref = process.env.NEXT_PUBLIC_MUTUAL_MARKET_URL || "/mutual-market"
   return (
     <div className="min-h-screen">
       {/* Navigation Header */}
@@ -20,6 +21,12 @@ export default function HomePage() {
             </Link>
             <Link href="/schemes" className="text-sm font-medium hover:text-primary transition-colors">
               Schemes
+            </Link>
+            <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
+              Pricing
+            </Link>
+            <Link href={mutualMarketHref} className="text-sm font-medium hover:text-primary transition-colors">
+              Mutual Market
             </Link>
             <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
               Dashboard

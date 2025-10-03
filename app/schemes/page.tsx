@@ -145,6 +145,12 @@ export default function SchemesPage() {
             <Link href="/schemes" className="text-sm font-medium text-primary">
               Schemes
             </Link>
+            <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
+              Pricing
+            </Link>
+            <Link href="http://localhost:3001/" className="text-sm font-medium hover:text-primary transition-colors">
+              Mutual Market
+            </Link>
             <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
               Dashboard
             </Link>

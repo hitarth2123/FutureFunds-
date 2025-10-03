@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import type { RetirementInput, RetirementOutput } from "@/lib/calculator"
 import { Loader2 } from "lucide-react"
+import { indianSchemes } from "@/lib/schemes"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface CalculatorFormProps {
   onCalculate: (result: RetirementOutput, input: RetirementInput) => void
@@ -33,6 +35,7 @@ export function CalculatorForm({ onCalculate, initialInput }: CalculatorFormProp
   const [fdReturn, setFdReturn] = useState(7)
   const [rdReturn, setRdReturn] = useState(7)
   const [inflation, setInflation] = useState(6)
+  const [schemeSelections, setSchemeSelections] = useState<Record<string, { amount: number; type: string }>>({})
 
   useEffect(() => {
     if (initialInput) {
@@ -56,13 +59,22 @@ export function CalculatorForm({ onCalculate, initialInput }: CalculatorFormProp
     setLoading(true)
     setError(null)
 
+    // Fold selected government schemes into monthly contributions by type
+    let addSIP = 0, addFD = 0, addRD = 0
+    Object.entries(schemeSelections).forEach(([_, v]) => {
+      if (!v || !v.amount || v.amount <= 0) return
+      if (v.type === "fixed-income") addFD += v.amount
+      else if (v.type === "pension") addRD += v.amount
+      else addSIP += v.amount
+    })
+
     const input: RetirementInput = {
       currentAge,
       retirementAge,
       currentSavings,
-      monthlySIP,
-      monthlyFD,
-      monthlyRD,
+      monthlySIP: monthlySIP + addSIP,
+      monthlyFD: monthlyFD + addFD,
+      monthlyRD: monthlyRD + addRD,
       expectedReturn: {
         mutualFunds: mfReturn,
         fd: fdReturn,
@@ -71,6 +83,13 @@ export function CalculatorForm({ onCalculate, initialInput }: CalculatorFormProp
       inflationRate: inflation,
       monthlyExpenseAfterRetirement: monthlyExpense,
       lifeExpectancy,
+      schemes: Object.entries(schemeSelections).map(([id, v]) => ({
+        id,
+        name: indianSchemes.find((s) => s.id === id)?.name || id,
+        type: (indianSchemes.find((s) => s.id === id)?.type as any) || 'savings',
+        amount: v.amount,
+        rate: indianSchemes.find((s) => s.id === id)?.interestRate || mfReturn,
+      })),
     }
 
     try {
@@ -300,6 +319,65 @@ export function CalculatorForm({ onCalculate, initialInput }: CalculatorFormProp
               onValueChange={(value) => setInflation(value[0])}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Government Schemes (optional) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Government Schemes (Optional)</CardTitle>
+          <CardDescription>Select one or more schemes and specify monthly amounts</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            {indianSchemes.map((scheme) => {
+              const selected = !!schemeSelections[scheme.id]
+              const amount = schemeSelections[scheme.id]?.amount || 0
+              return (
+                <div key={scheme.id} className="flex items-center gap-3">
+                  <Checkbox
+                    id={`scheme-${scheme.id}`}
+                    checked={selected}
+                    onCheckedChange={(checked) => {
+                      setSchemeSelections((prev) => {
+                        const next = { ...prev }
+                        if (checked) {
+                          next[scheme.id] = { amount: amount || scheme.minInvestment, type: scheme.type }
+                        } else {
+                          delete next[scheme.id]
+                        }
+                        return next
+                      })
+                    }}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor={`scheme-${scheme.id}`} className="cursor-pointer">
+                      {scheme.name} <span className="text-xs text-muted-foreground">({scheme.type.replace("-", " ")}, ~{scheme.interestRate}% p.a.)</span>
+                    </Label>
+                    <div className="mt-2 relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        disabled={!selected}
+                        value={amount}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          setSchemeSelections((prev) => ({
+                            ...prev,
+                            [scheme.id]: { amount: isNaN(val) ? 0 : val, type: scheme.type },
+                          }))
+                        }}
+                        className="pl-8"
+                        placeholder="Monthly amount"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">Selected scheme amounts are added to the respective buckets (savings/tax-saving → Mutual Funds, fixed-income → Fixed Deposit, pension → Recurring Deposit) for calculation and graphs.</p>
         </CardContent>
       </Card>
 

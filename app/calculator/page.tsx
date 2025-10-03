@@ -11,8 +11,10 @@ import { UserNav } from "@/components/user-nav"
 import type { RetirementOutput, RetirementInput } from "@/lib/calculator"
 import { Calculator } from "lucide-react"
 import { getScenarioById } from "@/lib/scenarios"
+import { getSchemeById } from "@/lib/schemes"
 
 export default function CalculatorPage() {
+  const mutualMarketHref = process.env.NEXT_PUBLIC_MUTUAL_MARKET_URL || "/mutual-market"
   const searchParams = useSearchParams()
   const [result, setResult] = useState<RetirementOutput | null>(null)
   const [currentInput, setCurrentInput] = useState<RetirementInput | null>(null)
@@ -40,6 +42,47 @@ export default function CalculatorPage() {
     }
   }, [searchParams])
 
+  // Apply selected schemes (from Schemes page) to calculator inputs
+  useEffect(() => {
+    const raw = sessionStorage.getItem('selectedSchemes')
+    if (!raw) return
+    try {
+      const list: Array<{ id: string; amount: number }> = JSON.parse(raw)
+      if (!Array.isArray(list) || list.length === 0) return
+      // Map schemes to appropriate buckets (simplified):
+      // tax-saving/savings -> monthlySIP; fixed-income -> monthlyFD; pension -> monthlyRD
+      let addSIP = 0, addFD = 0, addRD = 0
+      list.forEach((s) => {
+        const scheme = getSchemeById(s.id)
+        if (!scheme) return
+        if (scheme.type === 'fixed-income') addFD += s.amount
+        else if (scheme.type === 'pension') addRD += s.amount
+        else addSIP += s.amount
+      })
+      setCurrentInput((prev) => {
+        const base = prev || {
+          currentAge: 30,
+          retirementAge: 60,
+          currentSavings: 0,
+          monthlySIP: 0,
+          monthlyFD: 0,
+          monthlyRD: 0,
+          expectedReturn: { mutualFunds: 12, fd: 7, rd: 7 },
+          inflationRate: 6,
+          monthlyExpenseAfterRetirement: 60000,
+          lifeExpectancy: 85,
+        }
+        return {
+          ...base,
+          monthlySIP: base.monthlySIP + addSIP,
+          monthlyFD: base.monthlyFD + addFD,
+          monthlyRD: base.monthlyRD + addRD,
+        }
+      })
+      sessionStorage.removeItem('selectedSchemes')
+    } catch {}
+  }, [])
+
   const handleCalculate = (output: RetirementOutput, input: RetirementInput) => {
     setResult(output)
     setCurrentInput(input)
@@ -60,6 +103,12 @@ export default function CalculatorPage() {
             </Link>
             <Link href="/schemes" className="text-sm font-medium hover:text-primary transition-colors">
               Schemes
+            </Link>
+            <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
+              Pricing
+            </Link>
+            <Link href={mutualMarketHref} className="text-sm font-medium hover:text-primary transition-colors">
+              Mutual Market
             </Link>
             <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
               Dashboard

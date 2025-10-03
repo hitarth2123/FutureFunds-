@@ -17,6 +17,7 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
     { name: "Fixed Deposits", value: result.breakdown.fd, fill: "#3b82f6" }, // Blue
     { name: "Recurring Deposits", value: result.breakdown.rd, fill: "#f59e0b" }, // Amber
     { name: "Current Savings", value: result.breakdown.currentSavings, fill: "#8b5cf6" }, // Purple
+    { name: "Govt Schemes", value: result.breakdown.schemes || 0, fill: "#ef4444" }, // Red
   ]
 
   // Prepare data for line chart (yearly projection)
@@ -26,7 +27,15 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
     "Mutual Funds": Math.round(item.mutualFunds),
     "Fixed Deposits": Math.round(item.fd),
     "Recurring Deposits": Math.round(item.rd),
+    "Govt Schemes": Math.round((item as any).schemes || 0),
     Total: Math.round(item.total),
+  }))
+
+  // Optional: schemes breakdown for bar chart
+  const schemesData = (result.schemesBreakdown || []).map((s, idx) => ({
+    name: s.name,
+    value: Math.round(s.value),
+    fill: ["#0ea5e9", "#22c55e", "#f97316", "#a855f7", "#ef4444", "#eab308"][idx % 6],
   }))
 
   // Format currency
@@ -53,6 +62,10 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
     rd: {
       label: "Recurring Deposits",
       color: "#f59e0b",
+    },
+    schemes: {
+      label: "Govt Schemes",
+      color: "#ef4444",
     },
     total: {
       label: "Total Corpus",
@@ -164,32 +177,78 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
             </ChartContainer>
           </CardContent>
         </Card>
+        {/* Right column: Prefer Govt Schemes Breakdown to avoid gaps */}
+        {schemesData.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Government Schemes Breakdown</CardTitle>
+              <CardDescription>Contribution by each selected scheme</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[300px]">
+                <BarChart data={schemesData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                  <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                  <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {schemesData.map((entry, index) => (
+                      <Cell key={`scheme-cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Investment Comparison</CardTitle>
+              <CardDescription>Final value of each investment type at retirement</CardDescription>
+            </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[420px]">
+                <BarChart data={pieData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                  <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                  <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
-        {/* Bar Chart - Investment Breakdown */}
+      {/* If schemes exist, render Investment Comparison full-width below */}
+      {schemesData.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Investment Comparison</CardTitle>
             <CardDescription>Final value of each investment type at retirement</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[200px], w-full">
               <BarChart data={pieData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={50} />
                 <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <ChartTooltip
-                  content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
-                />
+                <ChartTooltip content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                 <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                   {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell key={`cell-bottom-${index}`} fill={entry.fill} />
                   ))}
                 </Bar>
               </BarChart>
             </ChartContainer>
           </CardContent>
         </Card>
-      </div>
+      )}
 
       {/* Line Chart - Growth Over Time */}
       <Card>
@@ -209,6 +268,7 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="year" />
               <YAxis tickFormatter={(value) => formatCurrency(value)} />
+              <Legend />
               <ChartTooltip
                 content={
                   <ChartTooltipContent
@@ -225,6 +285,10 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
                 fill="url(#colorTotal)"
                 strokeWidth={2}
               />
+              <Area type="monotone" dataKey="Govt Schemes" stroke="#ef4444" strokeWidth={2} fillOpacity={0} />
+              <Area type="monotone" dataKey="Mutual Funds" stroke="#10b981" strokeDasharray="5 5" strokeWidth={1.5} fillOpacity={0} />
+              <Area type="monotone" dataKey="Fixed Deposits" stroke="#3b82f6" strokeDasharray="5 5" strokeWidth={1.5} fillOpacity={0} />
+              <Area type="monotone" dataKey="Recurring Deposits" stroke="#f59e0b" strokeDasharray="5 5" strokeWidth={1.5} fillOpacity={0} />
             </AreaChart>
           </ChartContainer>
         </CardContent>
@@ -250,6 +314,21 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
                 </p>
               </div>
             </div>
+
+            {result.breakdown.schemes > 0 && (
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="font-semibold">Government Schemes</p>
+                  <p className="text-sm text-muted-foreground">Selected schemes combined</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.schemes)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {((result.breakdown.schemes / result.achievedCorpus) * 100).toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
               <div>

@@ -12,6 +12,7 @@ import { Calculator, Plus, FolderOpen } from "lucide-react"
 import Link from "next/link"
 
 export default function DashboardPage() {
+  const mutualMarketHref = process.env.NEXT_PUBLIC_MUTUAL_MARKET_URL || "/mutual-market"
   const router = useRouter()
   const [scenarios, setScenarios] = useState<Scenario[]>([])
   const [loading, setLoading] = useState(true)
@@ -63,6 +64,12 @@ export default function DashboardPage() {
             </Link>
             <Link href="/schemes" className="text-sm font-medium hover:text-primary transition-colors">
               Schemes
+            </Link>
+            <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
+              Pricing
+            </Link>
+            <Link href={mutualMarketHref} className="text-sm font-medium hover:text-primary transition-colors">
+              Mutual Market
             </Link>
             <Link href="/dashboard" className="text-sm font-medium text-primary">
               Dashboard

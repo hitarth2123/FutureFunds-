@@ -15,6 +15,13 @@ export interface RetirementInput {
   inflationRate: number // percentage
   monthlyExpenseAfterRetirement: number
   lifeExpectancy: number
+  schemes?: Array<{
+    id: string
+    name: string
+    type: 'pension' | 'savings' | 'tax-saving' | 'fixed-income'
+    amount: number
+    rate: number
+  }>
 }
 
 export interface RetirementOutput {
@@ -25,13 +32,16 @@ export interface RetirementOutput {
     fd: number
     rd: number
     currentSavings: number
+    schemes: number
   }
+  schemesBreakdown?: Array<{ id: string; name: string; type: string; value: number }>
   yearlyProjection: Array<{
     year: number
     age: number
     mutualFunds: number
     fd: number
     rd: number
+    schemes: number
     total: number
   }>
   isGoalAchievable: boolean
@@ -86,7 +96,18 @@ export function calculateRetirement(input: RetirementInput): RetirementOutput {
     yearsToRetirement,
   )
 
-  const achievedCorpus = mutualFundsFV + fdFV + rdFV + currentSavingsFV
+  // Per-scheme future values (optional)
+  let schemesTotal = 0
+  const schemesBreakdown: Array<{ id: string; name: string; type: string; value: number }> = []
+  if (input.schemes && input.schemes.length > 0) {
+    for (const s of input.schemes) {
+      const v = calculateSIPFutureValue(s.amount, s.rate, yearsToRetirement)
+      schemesBreakdown.push({ id: s.id, name: s.name, type: s.type, value: v })
+      schemesTotal += v
+    }
+  }
+
+  const achievedCorpus = mutualFundsFV + fdFV + rdFV + currentSavingsFV + schemesTotal
 
   // Calculate required corpus
   const requiredCorpus = calculateRequiredCorpus(
@@ -105,6 +126,12 @@ export function calculateRetirement(input: RetirementInput): RetirementOutput {
     const fdValue = calculateSIPFutureValue(input.monthlyFD, input.expectedReturn.fd, i)
     const rdValue = calculateSIPFutureValue(input.monthlyRD, input.expectedReturn.rd, i)
     const savingsValue = calculateLumpsumFutureValue(input.currentSavings, input.expectedReturn.mutualFunds, i)
+    let schemesValue = 0
+    if (input.schemes && input.schemes.length > 0) {
+      for (const s of input.schemes) {
+        schemesValue += calculateSIPFutureValue(s.amount, s.rate, i)
+      }
+    }
 
     yearlyProjection.push({
       year,
@@ -112,7 +139,8 @@ export function calculateRetirement(input: RetirementInput): RetirementOutput {
       mutualFunds: mfValue,
       fd: fdValue,
       rd: rdValue,
-      total: mfValue + fdValue + rdValue + savingsValue,
+      schemes: schemesValue,
+      total: mfValue + fdValue + rdValue + savingsValue + schemesValue,
     })
   }
 
@@ -124,7 +152,9 @@ export function calculateRetirement(input: RetirementInput): RetirementOutput {
       fd: fdFV,
       rd: rdFV,
       currentSavings: currentSavingsFV,
+      schemes: schemesTotal,
     },
+    schemesBreakdown: schemesBreakdown.length ? schemesBreakdown : undefined,
     yearlyProjection,
     isGoalAchievable: achievedCorpus >= requiredCorpus,
     shortfall: Math.max(0, requiredCorpus - achievedCorpus),

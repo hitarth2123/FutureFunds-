@@ -8,6 +8,7 @@ import { indianSchemes, fdRates } from "@/lib/schemes"
 import { Calculator, TrendingUp, Shield, PiggyBank, IndianRupee, Lock, Award, ExternalLink } from "lucide-react"
 
 export default function SchemesPage() {
+  const mutualMarketHref = process.env.NEXT_PUBLIC_MUTUAL_MARKET_URL || "/mutual-market"
   const pensionSchemes = indianSchemes.filter((s) => s.type === "pension")
   const savingsSchemes = indianSchemes.filter((s) => s.type === "savings")
   const taxSavingSchemes = indianSchemes.filter((s) => s.type === "tax-saving")
@@ -148,7 +149,7 @@ export default function SchemesPage() {
             <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors">
               Pricing
             </Link>
-            <Link href="http://localhost:3001/" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link href={mutualMarketHref} className="text-sm font-medium hover:text-primary transition-colors">
               Mutual Market
             </Link>
             <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">

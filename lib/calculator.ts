@@ -50,6 +50,9 @@ export interface RetirementOutput {
 
 // Calculate future value of SIP (Systematic Investment Plan)
 export function calculateSIPFutureValue(monthlyInvestment: number, annualReturnRate: number, years: number): number {
+  // If no monthly investment, return 0 regardless of rate
+  if (monthlyInvestment === 0) return 0
+  
   const monthlyRate = annualReturnRate / 12 / 100
   const months = years * 12
 
@@ -62,6 +65,9 @@ export function calculateSIPFutureValue(monthlyInvestment: number, annualReturnR
 
 // Calculate future value of lumpsum investment
 export function calculateLumpsumFutureValue(principal: number, annualReturnRate: number, years: number): number {
+  // If no principal amount, return 0 regardless of rate
+  if (principal === 0) return 0
+  
   return principal * Math.pow(1 + annualReturnRate / 100, years)
 }
 

@@ -11,14 +11,14 @@ interface ResultsDisplayProps {
 }
 
 export function ResultsDisplay({ result }: ResultsDisplayProps) {
-  // Prepare data for pie chart (corpus breakdown)
+  // Prepare data for pie chart (corpus breakdown) - filter out zero values
   const pieData = [
     { name: "Mutual Funds", value: result.breakdown.mutualFunds, fill: "#10b981" }, // Emerald
     { name: "Fixed Deposits", value: result.breakdown.fd, fill: "#3b82f6" }, // Blue
     { name: "Recurring Deposits", value: result.breakdown.rd, fill: "#f59e0b" }, // Amber
     { name: "Current Savings", value: result.breakdown.currentSavings, fill: "#8b5cf6" }, // Purple
     { name: "Govt Schemes", value: result.breakdown.schemes || 0, fill: "#ef4444" }, // Red
-  ]
+  ].filter(item => item.value > 0) // Remove zero-value items from pie chart
 
   // Prepare data for line chart (yearly projection)
   const lineData = result.yearlyProjection.map((item) => ({
@@ -46,6 +46,7 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
   }
 
   const formatPercentage = (value: number) => {
+    if (result.achievedCorpus === 0) return "0%"
     const percentage = (value / result.achievedCorpus) * 100
     return `${percentage.toFixed(1)}%`
   }
@@ -302,18 +303,20 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-              <div>
-                <p className="font-semibold">Mutual Funds (SIP)</p>
-                <p className="text-sm text-muted-foreground">Equity & debt mutual funds</p>
+            {result.breakdown.mutualFunds > 0 && (
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="font-semibold">Mutual Funds (SIP)</p>
+                  <p className="text-sm text-muted-foreground">Equity & debt mutual funds</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.mutualFunds)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {((result.breakdown.mutualFunds / result.achievedCorpus) * 100).toFixed(1)}%
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.mutualFunds)}</p>
-                <p className="text-sm text-muted-foreground">
-                  {((result.breakdown.mutualFunds / result.achievedCorpus) * 100).toFixed(1)}%
-                </p>
-              </div>
-            </div>
+            )}
 
             {result.breakdown.schemes > 0 && (
               <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
@@ -330,44 +333,50 @@ export function ResultsDisplay({ result }: ResultsDisplayProps) {
               </div>
             )}
 
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-              <div>
-                <p className="font-semibold">Fixed Deposits</p>
-                <p className="text-sm text-muted-foreground">Bank fixed deposits</p>
+            {result.breakdown.fd > 0 && (
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="font-semibold">Fixed Deposits</p>
+                  <p className="text-sm text-muted-foreground">Bank fixed deposits</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.fd)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {((result.breakdown.fd / result.achievedCorpus) * 100).toFixed(1)}%
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.fd)}</p>
-                <p className="text-sm text-muted-foreground">
-                  {((result.breakdown.fd / result.achievedCorpus) * 100).toFixed(1)}%
-                </p>
-              </div>
-            </div>
+            )}
 
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-              <div>
-                <p className="font-semibold">Recurring Deposits</p>
-                <p className="text-sm text-muted-foreground">Monthly recurring deposits</p>
+            {result.breakdown.rd > 0 && (
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="font-semibold">Recurring Deposits</p>
+                  <p className="text-sm text-muted-foreground">Monthly recurring deposits</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.rd)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {((result.breakdown.rd / result.achievedCorpus) * 100).toFixed(1)}%
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.rd)}</p>
-                <p className="text-sm text-muted-foreground">
-                  {((result.breakdown.rd / result.achievedCorpus) * 100).toFixed(1)}%
-                </p>
-              </div>
-            </div>
+            )}
 
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-              <div>
-                <p className="font-semibold">Current Savings</p>
-                <p className="text-sm text-muted-foreground">Lumpsum investment growth</p>
+            {result.breakdown.currentSavings > 0 && (
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="font-semibold">Current Savings</p>
+                  <p className="text-sm text-muted-foreground">Lumpsum investment growth</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.currentSavings)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {((result.breakdown.currentSavings / result.achievedCorpus) * 100).toFixed(1)}%
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-primary">{formatCurrency(result.breakdown.currentSavings)}</p>
-                <p className="text-sm text-muted-foreground">
-                  {((result.breakdown.currentSavings / result.achievedCorpus) * 100).toFixed(1)}%
-                </p>
-              </div>
-            </div>
+            )}
 
             <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg border-2 border-primary">
               <div>

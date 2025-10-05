@@ -26,10 +26,10 @@ export function CalculatorForm({ onCalculate, initialInput }: CalculatorFormProp
   const [currentAge, setCurrentAge] = useState(30)
   const [retirementAge, setRetirementAge] = useState(60)
   const [lifeExpectancy, setLifeExpectancy] = useState(80)
-  const [currentSavings, setCurrentSavings] = useState(500000)
-  const [monthlySIP, setMonthlySIP] = useState(10000)
-  const [monthlyFD, setMonthlyFD] = useState(5000)
-  const [monthlyRD, setMonthlyRD] = useState(3000)
+  const [currentSavings, setCurrentSavings] = useState(0)
+  const [monthlySIP, setMonthlySIP] = useState(0)
+  const [monthlyFD, setMonthlyFD] = useState(0)
+  const [monthlyRD, setMonthlyRD] = useState(0)
   const [monthlyExpense, setMonthlyExpense] = useState(50000)
   const [mfReturn, setMfReturn] = useState(12)
   const [fdReturn, setFdReturn] = useState(7)
@@ -59,22 +59,13 @@ export function CalculatorForm({ onCalculate, initialInput }: CalculatorFormProp
     setLoading(true)
     setError(null)
 
-    // Fold selected government schemes into monthly contributions by type
-    let addSIP = 0, addFD = 0, addRD = 0
-    Object.entries(schemeSelections).forEach(([_, v]) => {
-      if (!v || !v.amount || v.amount <= 0) return
-      if (v.type === "fixed-income") addFD += v.amount
-      else if (v.type === "pension") addRD += v.amount
-      else addSIP += v.amount
-    })
-
     const input: RetirementInput = {
       currentAge,
       retirementAge,
       currentSavings,
-      monthlySIP: monthlySIP + addSIP,
-      monthlyFD: monthlyFD + addFD,
-      monthlyRD: monthlyRD + addRD,
+      monthlySIP, // Keep original values - schemes are handled separately
+      monthlyFD,
+      monthlyRD,
       expectedReturn: {
         mutualFunds: mfReturn,
         fd: fdReturn,

@@ -49,36 +49,8 @@ export default function CalculatorPage() {
     try {
       const list: Array<{ id: string; amount: number }> = JSON.parse(raw)
       if (!Array.isArray(list) || list.length === 0) return
-      // Map schemes to appropriate buckets (simplified):
-      // tax-saving/savings -> monthlySIP; fixed-income -> monthlyFD; pension -> monthlyRD
-      let addSIP = 0, addFD = 0, addRD = 0
-      list.forEach((s) => {
-        const scheme = getSchemeById(s.id)
-        if (!scheme) return
-        if (scheme.type === 'fixed-income') addFD += s.amount
-        else if (scheme.type === 'pension') addRD += s.amount
-        else addSIP += s.amount
-      })
-      setCurrentInput((prev) => {
-        const base = prev || {
-          currentAge: 30,
-          retirementAge: 60,
-          currentSavings: 0,
-          monthlySIP: 0,
-          monthlyFD: 0,
-          monthlyRD: 0,
-          expectedReturn: { mutualFunds: 12, fd: 7, rd: 7 },
-          inflationRate: 6,
-          monthlyExpenseAfterRetirement: 60000,
-          lifeExpectancy: 85,
-        }
-        return {
-          ...base,
-          monthlySIP: base.monthlySIP + addSIP,
-          monthlyFD: base.monthlyFD + addFD,
-          monthlyRD: base.monthlyRD + addRD,
-        }
-      })
+      // Clear the sessionStorage - schemes will be handled separately in the form
+      // Don't add schemes to monthlySIP/FD/RD values anymore
       sessionStorage.removeItem('selectedSchemes')
     } catch {}
   }, [])
